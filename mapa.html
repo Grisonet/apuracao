@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<script>/* a apuração mudou para apuracao.grisodata.com.br: o endereço antigo (…/apuracao-sp/) leva para lá */if(/^(grisonet\.github\.io|(www\.)?grisodata\.com\.br)$/.test(location.hostname)&&/^\/apuracao-sp(\/|$)/.test(location.pathname))location.replace("https://apuracao.grisodata.com.br"+location.pathname.replace(/^\/apuracao-sp/,"")+location.search+location.hash)</script>
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Samuel × Dani · Mapa e Guaratinguetá</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Inter+Tight:wght@600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  :root{
+    --canvas:#ffffff;--parchment:#f6f5f3;--pearl:#faf9f7;--ink:#080808;--graphite:#454545;--steel:#7a7a7a;
+    --hairline:#e5e5e5;--divider:#f0efed;--track:#f0efed;--primary:#FF4C00;--amber:#FFC200;
+    --samuel:#1E63C8;--dani:#E0218A;--nodata:#dcdce2;--pos:#16A34A;
+    color-scheme:light;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--parchment);color:var(--ink);font-family:"Inter",system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.011em;line-height:1.45;font-size:15px}
+  h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.021em;text-wrap:balance}
+  .wrap{max-width:1180px;margin:0 auto;padding-inline:16px}
+  header{position:sticky;top:0;z-index:30;background:#080808;color:#fff;border-bottom:1px solid rgba(255,255,255,.08)}
+  .hd{display:flex;align-items:center;gap:11px;padding-block:11px;flex-wrap:wrap}
+  .grlogo{height:22px;width:auto;fill:#fff;display:block}
+  .sep{width:1px;height:20px;background:rgba(255,255,255,.22)}
+  .htitle{font-weight:600;font-size:clamp(13px,2.6vw,16px);white-space:nowrap}.htitle b{color:var(--primary)}
+  .live{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:#ccc;white-space:nowrap}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--primary)}
+  main{padding-block:12px 44px}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--steel);margin:26px 2px 11px;display:flex;align-items:center;gap:10px}
+  .eyebrow .rule{flex:1;height:1px;background:var(--hairline)}
+  .nav{display:inline-flex;gap:8px;align-items:center;font-size:13px;margin-top:14px}.nav a{color:var(--primary);text-decoration:none;font-weight:600}
+
+  /* mapa do estado */
+  .scoreboard{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-bottom:14px}
+  .cc{display:flex;align-items:center;gap:12px;background:var(--canvas);border:1px solid var(--hairline);border-radius:16px;padding:13px 15px;min-width:0}
+  .cc img{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:none;border:3px solid var(--c)}
+  .cc .nm{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cc .meta{font-size:12.5px;color:var(--steel)}
+  .cc .big{font-size:22px;font-weight:600;letter-spacing:-.02em;margin-left:auto;text-align:right;color:var(--c)}
+  .cc .big small{display:block;font-size:11px;color:var(--steel);font-weight:400}
+  .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .search{flex:1;min-width:180px;font:inherit;font-size:14px;border:1px solid var(--hairline);border-radius:9999px;padding:10px 16px;background:var(--canvas);color:var(--ink)}
+  .search:focus-visible{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(255,76,0,.15)}
+  .btn{font:inherit;font-size:13px;font-weight:600;color:var(--graphite);background:var(--divider);border:0;border-radius:9999px;padding:9px 14px;cursor:pointer}
+  .chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--graphite);cursor:pointer}
+  .upd{font-size:12px;color:var(--steel);margin-left:auto;white-space:nowrap}
+  .mapcard{background:var(--canvas);border:1px solid var(--hairline);border-radius:18px;padding:10px;overflow:hidden}
+  svg#sdmap{width:100%;height:auto;display:block;touch-action:none;cursor:grab}svg#sdmap:active{cursor:grabbing}
+  path.mun{stroke:#fff;stroke-width:.4;vector-effect:non-scaling-stroke;transition:fill .5s ease}
+  path.mun.selected{stroke:var(--primary);stroke-width:2.2}
+  .pin image{pointer-events:none}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--graphite);padding:8px 4px 2px}
+  .legend .sw{display:inline-flex;align-items:center;gap:6px}.legend .box{width:13px;height:13px;border-radius:4px}
+  .tip{position:fixed;pointer-events:none;background:#080808;color:#fff;font-size:12.5px;padding:8px 11px;border-radius:9px;z-index:60;opacity:0;transition:opacity .1s;max-width:230px;line-height:1.4}.tip b{font-weight:600}
+  .detail{background:var(--canvas);border:1px solid var(--hairline);border-radius:14px;padding:13px 16px;margin-top:12px;display:none}.detail.on{display:block}
+  .detail h3{font-size:16px;margin-bottom:4px}
+  .detail .row{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .detail .bar{flex:1;height:10px;border-radius:9999px;background:var(--divider);overflow:hidden;min-width:60px}.detail .bar>i{display:block;height:100%}
+  .detail .lbl{font-size:13px;min-width:120px;display:flex;align-items:center;gap:7px}.detail .lbl img{width:22px;height:22px;border-radius:50%;object-fit:cover}
+  .detail .v{font-weight:600;font-size:14px;min-width:92px;text-align:right}
+
+  /* estudo de guaratinguetá */
+  .kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .kpi{background:var(--canvas);border:1px solid var(--hairline);border-radius:16px;padding:15px 16px}
+  .kpi .l{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--steel);font-weight:600}
+  .kpi .v{font-size:26px;font-weight:600;letter-spacing:-.025em;margin-top:5px}.kpi .v small{font-size:13px;color:var(--steel);font-weight:400}
+  .h2h{background:var(--canvas);border:1px solid var(--hairline);border-radius:18px;padding:20px;margin-top:6px}
+  .h2h .top{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}
+  .cand{flex:1 1 220px;min-width:0;display:flex;gap:13px;align-items:center;padding:14px;border-radius:14px;border:1px solid var(--hairline)}
+  .cand.win{border-color:var(--c);box-shadow:inset 3px 0 0 var(--c)}
+  .cand img{width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid var(--c);flex:none}
+  .cand .nm{font-weight:600;font-size:16px}.cand .meta{font-size:12.5px;color:var(--steel)}
+  .cand .big{font-size:30px;font-weight:600;letter-spacing:-.025em;color:var(--c);margin-top:2px}.cand .big small{font-size:13px;color:var(--steel);font-weight:400}
+  .h2hbar{display:flex;height:18px;border-radius:9999px;overflow:hidden;margin-top:16px;background:var(--divider)}.h2hbar i{display:block;height:100%}
+  .h2hnote{font-size:13px;color:var(--graphite);margin-top:10px}.h2hnote b{font-weight:600}
+  .vsstate{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--steel);border-top:1px dashed var(--hairline);padding-top:11px}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));align-items:start}
+  .card{background:var(--canvas);border:1px solid var(--hairline);border-radius:18px;padding:18px 18px 14px;min-width:0}
+  .chead{display:flex;align-items:center;gap:10px;margin-bottom:6px}.chead .ic{font-size:16px}.chead h3{font-size:16px}
+  .csub{font-size:12px;color:var(--steel);margin-bottom:10px}
+  .rr{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--divider)}.rr:last-child{border-bottom:0}
+  .rk{width:22px;text-align:center;font-size:12.5px;font-weight:600;color:var(--steel);flex:none}
+  .cmain{flex:1;min-width:0}
+  .nmrow{display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nm2{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .party{flex:none;font-size:10px;font-weight:600;color:var(--graphite);background:var(--divider);border:1px solid var(--hairline);border-radius:9999px;padding:1px 6px}
+  .vg{flex:none;font-size:9.5px;font-weight:700;color:#080808;background:var(--amber);border-radius:9999px;padding:1px 6px}
+  .trk{height:5px;border-radius:9999px;background:var(--track);overflow:hidden;margin-top:5px}.trk>i{display:block;height:100%;border-radius:9999px;background:var(--fill,var(--steel))}
+  .val{flex:none;text-align:right;min-width:92px}.val .pc{font-size:15px;font-weight:600}.val .vt{font-size:10.5px;color:var(--steel)}
+  .note{font-size:11.5px;color:var(--steel);margin-top:9px;border-top:1px dashed var(--hairline);padding-top:8px}
+
+  footer{color:var(--steel);font-size:12px;border-top:1px solid var(--hairline);padding-block:18px;margin-top:30px;line-height:1.7}footer b{color:var(--graphite)}
+  .contact{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-bottom:13px;margin-bottom:12px;border-bottom:1px solid var(--hairline)}
+  .wabtn{display:inline-flex;align-items:center;gap:8px;background:var(--primary);color:#080808;font-weight:600;font-size:14px;text-decoration:none;border-radius:9999px;padding:10px 18px}
+  .grlogo-foot{height:20px;fill:var(--graphite);margin-left:auto;opacity:.85}
+  .skl{color:var(--steel);font-size:13px;padding:10px 2px}
+  @media(max-width:560px){.scoreboard{grid-template-columns:1fr}.kpi .v{font-size:22px}.cand .big{font-size:25px}}
+</style>
+<link rel="stylesheet" href="tema-grquest.css">
+<script src="ga.js" data-ga-id="G-C2S57QPWRM" data-ga-produto="grdata" data-ga-cor="#FF6428" async></script>
+</head>
+<body>
+<svg width="0" height="0" aria-hidden="true" style="position:absolute"><symbol id="grlogo" viewBox="0 0 1743.4 319.86"><g><g><path d="M657.86,248.74c-25.77-1.21-49.42-14.95-63.2-36.96l-13.25-23.52-33.24-6.42v-6.44l25.96-.06h122.08c22.88,0,45.6-8.76,61.21-23.13,17.43-16.02,28.35-39,28.35-64.54,0-28.82-13.9-54.38-35.37-70.35-14.6-10.88-34.59-17.32-54.19-17.32l-251.01.07v65.46s0,0,0,0v248.84h71.71l-1.04-95.41,18.71,29.87.24.39c24.2,38.63,65.72,62.8,110.97,64.98,2.18.12,4.39.17,6.59.17h125.26v-65.54h-116.06c-1.24,0-2.48-.02-3.72-.09ZM515.52,119.87v-41.93l-14.33-5.97v-6.44h177.27c5.96,0,11.45,1.91,15.92,5.16,1.17.84,2.27,1.79,3.29,2.8,4.92,4.92,7.96,11.72,7.96,19.21,0,15-12.16,27.17-27.17,27.17h-162.94Z"/><path d="M177.59,119.87h213.39v194.5h-72.97l2.3-95.41-18.71,29.87-.24.39c-25.39,40.53-69.84,65.15-117.66,65.15h-6.11v-.67l-.41.67h-17.73C72.64,314.37,0,243.99,0,157.18c0-43.41,18.16-82.7,47.17-111.14C76.18,17.59,116.05,0,159.45,0l225.16.07v65.46h-212.45c-50.62,0-91.65,41.04-91.65,91.65,0,25.31,10.26,48.22,26.85,64.81,16.58,16.58,39.49,26.84,64.8,26.84h2.34c27.2,0,52.48-14,66.92-37.05l13.79-23.66v.11l33.36-6.44v-6.44h-25.92.01s-85.07-.01-85.07-.01v-55.47Z"/></g><g opacity=".8"><path d="M900.33,1.34h114.23c94.46,0,139.27,64.14,139.27,158.16s-47.89,155.96-142.34,155.96h-111.15V1.34ZM1010.16,280.75c73.81,0,103.24-47.45,103.24-121.25s-26.36-123.89-100.17-123.89h-73.37v245.15h70.29Z"/><path d="M1330.43,283.83h-.44c-13.62,17.57-36.9,36.03-75.56,36.03-43.05,0-76.88-20.21-76.88-63.26,0-53.6,42.18-64.58,98.85-73.37,32.07-4.83,54.48-7.91,54.48-32.51s-18.45-39.98-50.96-39.98c-36.9,0-55.36,15.82-56.67,50.08h-34.27c1.32-43.93,30.31-76.88,90.5-76.88,48.33,0,83.91,18.01,83.91,72.05v108.08c0,18.45,4.39,28.56,24.16,24.16h1.32v25.92c-4.39,1.76-10.1,3.51-19.33,3.51-23.29,0-35.59-10.54-39.1-33.83ZM1331.31,231.55v-38.66c-11.86,7.47-32.51,13.18-51.84,16.69-35.59,6.59-64.14,12.74-64.14,46.13,0,30.31,23.72,36.9,47.01,36.9,47.45,0,68.97-34.71,68.97-61.07Z"/><path d="M1396.33,88.33h32.95V16.72h35.58v71.61h43.93v29h-43.93v147.62c0,15.82,8.35,21.09,22.85,21.09,7.03,0,14.94-1.76,18.89-3.08h1.32v30.75c-8.35,1.76-18.01,3.08-28.56,3.08-29,0-50.08-11.86-50.08-43.93V117.32h-32.95v-29Z"/><path d="M1684.97,283.83h-.44c-13.62,17.57-36.9,36.03-75.57,36.03-43.05,0-76.88-20.21-76.88-63.26,0-53.6,42.18-64.58,98.85-73.37,32.07-4.83,54.48-7.91,54.48-32.51s-18.45-39.98-50.96-39.98c-36.9,0-55.36,15.82-56.67,50.08h-34.27c1.32-43.93,30.31-76.88,90.5-76.88,48.33,0,83.91,18.01,83.91,72.05v108.08c0,18.45,4.39,28.56,24.16,24.16h1.32v25.92c-4.39,1.76-10.1,3.51-19.33,3.51-23.28,0-35.59-10.54-39.1-33.83ZM1685.85,231.55v-38.66c-11.86,7.47-32.51,13.18-51.84,16.69-35.59,6.59-64.14,12.74-64.14,46.13,0,30.31,23.72,36.9,47.01,36.9,47.45,0,68.97-34.71,68.97-61.07Z"/></g></g></symbol></svg>
+
+<div class="gq-stage">
+  <header class="gq-top"><div class="wrap gq-hd">
+    <a class="gq-mark" href="./"><svg class="grlogo" role="img" aria-label="GR Data"><use href="#grlogo"/></svg><span class="gq-chip">Samuel × Dani</span></a>
+    <nav class="gq-nav" aria-label="Páginas"><a href="./">Apuração SP</a><a href="projecao.html" class="gq-hot">Projeção 2º turno</a><a href="mapa.html" aria-current="page">Samuel × Dani</a><a href="dinheiro.html">Dinheiro × Votos</a></nav>
+    <div class="gq-live"><span class="gq-dot"></span><span id="live">carregando…</span></div>
+  </div></header>
+  <section class="wrap gq-hero">
+    <div class="gq-tagrow"><span class="gq-tag">Mapa</span><span class="gq-ctx">Deputado estadual · SP 2026</span></div>
+    <h1>Cabo Samuel × Dani Dias <span class="gq-hl">cidade a cidade</span></h1>
+    <p class="gq-lead">O mapa do estado com a votação dos dois em cada cidade e um estudo da votação em Guaratinguetá, seção a seção e por cargo.</p>
+  </section>
+</div>
+
+<main class="wrap">
+
+  <div class="eyebrow" style="margin-top:16px">Cabo Samuel × Dani Dias — mapa do estado (por cidade)<span class="rule"></span></div>
+  <div class="scoreboard">
+    <div class="cc" style="--c:var(--samuel)"><img src="fotos/samuel.jpg" alt=""><div style="min-width:0"><div class="nm">Cabo Samuel</div><div class="meta">55033 · lidera em <b id="cs">—</b> cidades</div></div><div class="big" id="vs">—<small>votos no estado</small></div></div>
+    <div class="cc" style="--c:var(--dani)"><img src="fotos/dani.jpg" alt=""><div style="min-width:0"><div class="nm">Dani Dias da Rádio</div><div class="meta">10002 · lidera em <b id="cd">—</b> cidades</div></div><div class="big" id="vd">—<small>votos no estado</small></div></div>
+  </div>
+  <div class="toolbar">
+    <input class="search" id="q" list="cities" placeholder="🔎 buscar cidade (ex.: Guaratinguetá)…" autocomplete="off">
+    <datalist id="cities"></datalist>
+    <button class="btn" id="reset">ver todo o estado</button>
+    <label class="chk"><input type="checkbox" id="pins" checked> fotos nas cidades</label>
+    <span class="upd" id="mapupd"></span>
+  </div>
+  <div class="mapcard"><svg id="sdmap" viewBox="0 0 1000 820" role="img" aria-label="Mapa de SP"></svg></div>
+  <div class="legend">
+    <span class="sw"><span class="box" style="background:var(--samuel)"></span> Cabo Samuel à frente</span>
+    <span class="sw"><span class="box" style="background:var(--dani)"></span> Dani Dias à frente</span>
+    <span class="sw"><span class="box" style="background:var(--nodata)"></span> empate / sem apuração</span>
+  </div>
+  <div class="detail" id="detail"></div>
+
+  <div class="eyebrow">Guaratinguetá — estudo da votação<span class="rule"></span></div>
+  <section class="kpis" id="kpis"><div class="skl">Carregando…</div></section>
+
+  <div class="eyebrow">Cabo Samuel × Dani Dias em Guaratinguetá<span class="rule"></span></div>
+  <div class="h2h" id="h2h"><div class="skl">—</div></div>
+
+  <div class="eyebrow">Principais votados em Guaratinguetá — por cargo<span class="rule"></span></div>
+  <section class="grid" id="cargos"></section>
+
+  <footer>
+    <div class="contact">
+      <a class="wabtn" href="https://wa.me/551132807177" target="_blank" rel="noopener">💬 WhatsApp Griso — informações</a>
+      <svg class="grlogo grlogo-foot" role="img" aria-label="GR Data"><use href="#grlogo"/></svg>
+    </div>
+    <div>Fonte: <b>Tribunal Superior Eleitoral</b>. Mapa por município (645 cidades de SP) e estudo de Guaratinguetá (324 seções). Dados a nível de município. <span id="tsetime"></span> Projeto independente, sem vínculo com a Justiça Eleitoral.</div>
+  </footer>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+const H="https://resultados.tse.jus.br/oficial/ele2026", CD="64696";
+const toInt=s=>parseInt(String(s==null?0:s).replace(/\./g,""),10)||0;
+const toNum=s=>parseFloat(String(s==null?0:s).replace(/\./g,"").replace(",","."))||0;
+const fmtV=n=>Number(n||0).toLocaleString("pt-BR");
+const fmtP=s=>toNum(s).toFixed(2).replace(".",",");
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const norm=s=>String(s==null?"":s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const tip=document.getElementById("tip");
+function flat(doc){const o=[];(doc.carg||[]).forEach(c=>(c.agr||[]).forEach(a=>(a.par||[]).forEach(p=>(p.cand||[]).forEach(cd=>o.push({n:cd.n,nm:cd.nmu||cd.nm,sg:p.sg||"",v:toInt(cd.vap),p:toNum(cd.pvap),pv:cd.pvap})))));o.sort((a,b)=>b.v-a.v);return o;}
+async function getJSON(u){const r=await fetch(u+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;return r.json();}
+
+/* ================= MAPA DO ESTADO: Cabo Samuel x Dani ================= */
+const SAMUEL="#1E63C8",DANI="#E0218A",NODATA="#dcdce2",W=1000,HH=820;
+let geo,data,byIbge={},path,svg,g,gMun,gPins,zoom,selectedId=null;
+const leaderOf=c=>(!c||c.p<=0||c.s===c.d)?null:(c.s>c.d?"s":"d");
+const colorOf=c=>{const l=leaderOf(c);return l==="s"?SAMUEL:l==="d"?DANI:NODATA;};
+async function initMap(){
+  geo=await fetch("sp-mun.geojson").then(r=>r.json());
+  const proj=d3.geoMercator().fitSize([W,HH],geo); path=d3.geoPath(proj);
+  svg=d3.select("#sdmap"); svg.append("defs").append("clipPath").attr("id","pclip").append("circle").attr("r",4.5);
+  g=svg.append("g"); gMun=g.append("g"); gPins=g.append("g");
+  gMun.selectAll("path").data(geo.features).join("path").attr("class","mun").attr("d",path).attr("fill",NODATA)
+    .on("mousemove",hover).on("mouseleave",()=>tip.style.opacity=0).on("click",(e,d)=>selectCity(d.properties.id,true));
+  const dl=document.getElementById("cities");
+  geo.features.map(d=>d.properties.name).sort((a,b)=>a.localeCompare(b,"pt")).forEach(n=>{const o=document.createElement("option");o.value=n;dl.appendChild(o);});
+  zoom=d3.zoom().scaleExtent([1,30]).on("zoom",e=>g.attr("transform",e.transform)); svg.call(zoom);
+  document.getElementById("q").addEventListener("change",e=>{const f=geo.features.find(d=>norm(d.properties.name)===norm(e.target.value));if(f)selectCity(f.properties.id,true);});
+  document.getElementById("reset").addEventListener("click",()=>{selectedId=null;gMun.selectAll("path").classed("selected",false);document.getElementById("detail").className="detail";document.getElementById("q").value="";svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity);});
+  document.getElementById("pins").addEventListener("change",drawPins);
+  await loadMap(); setInterval(loadMap,60000);
+}
+async function loadMap(){
+  try{data=await getJSON("estado.json");}catch(e){document.getElementById("mapupd").textContent="aguardando dados…";return;}
+  byIbge={}; data.cidades.forEach(c=>byIbge[c.ibge]=c);
+  gMun.selectAll("path").attr("fill",d=>colorOf(byIbge[d.properties.id]));
+  drawPins();
+  let cs=0,cd=0; geo.features.forEach(d=>{const l=leaderOf(byIbge[d.properties.id]);if(l==="s")cs++;else if(l==="d")cd++;});
+  document.getElementById("cs").textContent=cs; document.getElementById("cd").textContent=cd;
+  document.getElementById("vs").innerHTML=fmtV(data.tot.s)+"<small>votos no estado</small>";
+  document.getElementById("vd").innerHTML=fmtV(data.tot.d)+"<small>votos no estado</small>";
+  document.getElementById("mapupd").textContent="mapa: "+data.updated+(data.pst!=null?" · "+(+data.pst).toFixed(2).replace(".",",")+"% apurado SP":"");
+  if(selectedId)detailCity(selectedId);
+}
+function drawPins(){
+  if(!document.getElementById("pins").checked){gPins.selectAll("*").remove();return;}
+  const feats=geo.features.filter(d=>leaderOf(byIbge[d.properties.id]));
+  const s=gPins.selectAll("g.pin").data(feats,d=>d.properties.id); s.exit().remove();
+  const en=s.enter().append("g").attr("class","pin");
+  en.append("image").attr("clip-path","url(#pclip)").attr("x",-4.5).attr("y",-4.5).attr("width",9).attr("height",9);
+  en.append("circle").attr("r",5).attr("fill","none").attr("stroke-width",1).attr("vector-effect","non-scaling-stroke");
+  const all=en.merge(s); all.attr("transform",d=>{const c=path.centroid(d);return `translate(${c[0]},${c[1]})`;});
+  all.select("image").attr("href",d=>leaderOf(byIbge[d.properties.id])==="s"?"fotos/samuel.jpg":"fotos/dani.jpg");
+  all.select("circle").attr("stroke",d=>colorOf(byIbge[d.properties.id]));
+}
+function hover(e,d){const c=byIbge[d.properties.id],l=leaderOf(c);
+  const who=l==="s"?'Samuel à frente':l==="d"?'Dani à frente':"sem apuração";
+  tip.innerHTML=`<b>${d.properties.name}</b>${c?`<br>🔵 Samuel: ${fmtV(c.s)}<br>🩷 Dani: ${fmtV(c.d)}<br>${who} · ${c.p.toFixed(1).replace(".",",")}%`:"<br>sem dados"}`;
+  tip.style.left=Math.min(e.clientX+14,innerWidth-240)+"px";tip.style.top=(e.clientY+14)+"px";tip.style.opacity=1;}
+function selectCity(ibge,z){selectedId=ibge;gMun.selectAll("path").classed("selected",d=>d.properties.id===ibge);
+  const f=geo.features.find(d=>d.properties.id===ibge);
+  if(z&&f){const [[x0,y0],[x1,y1]]=path.bounds(f);const k=Math.min(30,.7*Math.min(W/(x1-x0),HH/(y1-y0)));svg.transition().duration(650).call(zoom.transform,d3.zoomIdentity.translate(W/2-k*(x0+x1)/2,HH/2-k*(y0+y1)/2).scale(k));}
+  detailCity(ibge);}
+function detailCity(ibge){const f=geo.features.find(d=>d.properties.id===ibge);if(!f)return;const c=byIbge[ibge],el=document.getElementById("detail");
+  const tot=c?(c.s+c.d):0,ps=tot?c.s/tot*100:0,pd=tot?c.d/tot*100:0;
+  el.className="detail on";
+  el.innerHTML=`<h3>${f.properties.name}</h3><div style="font-size:12.5px;color:var(--steel)">${c?c.p.toFixed(2).replace(".",",")+"% apurado":"sem dados"}</div>
+    <div class="row"><span class="lbl"><img src="fotos/samuel.jpg"> Cabo Samuel</span><span class="bar"><i style="width:${ps}%;background:${SAMUEL}"></i></span><span class="v" style="color:${SAMUEL}">${fmtV(c?c.s:0)}</span></div>
+    <div class="row"><span class="lbl"><img src="fotos/dani.jpg"> Dani Dias</span><span class="bar"><i style="width:${pd}%;background:${DANI}"></i></span><span class="v" style="color:${DANI}">${fmtV(c?c.d:0)}</span></div>`;}
+
+/* ================= ESTUDO DE GUARATINGUETÁ ================= */
+const U=(pl,c)=>`${H}/${pl}/dados/sp/sp${CD}-c${c}-e00${pl}-u.json`;
+const CARGOS=[
+  {key:"PRES",ic:"🇧🇷",nm:"Presidente",url:U("6257","0001"),top:12},
+  {key:"GOV", ic:"🏛️",nm:"Governador",url:U("6259","0003"),top:5},
+  {key:"SEN", ic:"🗳️",nm:"Senador",sub:"2 vagas",url:U("6259","0005"),vagas:2,top:13},
+  {key:"DF",  ic:"🟧",nm:"Deputado Federal",url:U("6259","0006"),top:15},
+  {key:"DE",  ic:"🟧",nm:"Deputado Estadual",url:U("6259","0007"),top:15},
+];
+function kpis(est){const e=est.e||{},v=est.v||{},s=est.s||{};
+  const d=[{l:"Eleitorado apto",v:fmtV(toInt(e.te))},
+    {l:"Comparecimento",v:fmtP(e.pc)+"<small>%</small>",s:fmtV(toInt(e.c))+" votantes"},
+    {l:"Abstenção",v:fmtP(e.pa)+"<small>%</small>",s:fmtV(toInt(e.a))+" eleitores"},
+    {l:"Votos válidos",v:fmtV(toInt(v.vv))},
+    {l:"Brancos",v:fmtV(toInt(v.vb))+`<small> (${fmtP(v.pvb)}%)</small>`},
+    {l:"Nulos",v:fmtV(toInt(v.vn||v.tvn))+`<small> (${fmtP(v.ptvn)}%)</small>`},
+    {l:"Seções",v:fmtV(toInt(s.st))+`<small>/${fmtV(toInt(s.ts))}</small>`,s:fmtP(s.pst)+"% apurado"}];
+  return d.map(k=>`<div class="kpi"><div class="l">${k.l}</div><div class="v">${k.v}</div>${k.s?`<div style="font-size:11.5px;color:var(--steel);margin-top:4px">${k.s}</div>`:""}</div>`).join("");
+}
+function h2hGuara(est,stateDoc){const cs=flat(est);
+  const S=cs.find(c=>c.n==="55033")||{v:0,pv:"0"},D=cs.find(c=>c.n==="10002")||{v:0,pv:"0"};
+  const rk={};cs.forEach((c,i)=>rk[c.n]=i+1);
+  const tot=S.v+D.v||1,sp=S.v/tot*100,dp=D.v/tot*100,win=S.v>=D.v?"S":"D",diff=Math.abs(S.v-D.v);
+  let st="";if(stateDoc){const scs=flat(stateDoc),Ss=scs.find(c=>c.n==="55033")||{pv:"0",v:0},Ds=scs.find(c=>c.n==="10002")||{pv:"0",v:0};
+    st=`<div class="vsstate"><span>No estado: <b style="color:var(--samuel)">Samuel ${fmtP(Ss.pv)}%</b> (${fmtV(Ss.v)}) · <b style="color:var(--dani)">Dani ${fmtP(Ds.pv)}%</b> (${fmtV(Ds.v)})</span></div>`;}
+  return `<div class="top">
+    <div class="cand ${win==="S"?"win":""}" style="--c:var(--samuel)"><img src="fotos/samuel.jpg" alt=""><div style="min-width:0"><div class="nm">Cabo Samuel</div><div class="meta">55033 · ${rk["55033"]||"—"}º em Guará</div><div class="big">${fmtV(S.v)}<small> votos · ${fmtP(S.pv)}%</small></div></div></div>
+    <div class="cand ${win==="D"?"win":""}" style="--c:var(--dani)"><img src="fotos/dani.jpg" alt=""><div style="min-width:0"><div class="nm">Dani Dias da Rádio</div><div class="meta">10002 · ${rk["10002"]||"—"}º em Guará</div><div class="big">${fmtV(D.v)}<small> votos · ${fmtP(D.pv)}%</small></div></div></div></div>
+  <div class="h2hbar"><i style="width:${sp}%;background:var(--samuel)"></i><i style="width:${dp}%;background:var(--dani)"></i></div>
+  <div class="h2hnote">Em Guaratinguetá, <b>${win==="S"?"Cabo Samuel":"Dani Dias"}</b> está à frente por <b>${fmtV(diff)}</b> voto(s).</div>${st}`;
+}
+function cargoCard(r,doc){const cs=flat(doc),maxP=Math.max(0.0001,...cs.map(c=>c.p)),vagas=r.vagas||0;
+  const rows=cs.slice(0,r.top).map((c,i)=>{
+    const vg=(vagas&&i<vagas)?`<span class="vg">🏆 eleito</span>`:"";
+    const fill=(vagas&&i<vagas)?"var(--primary)":"var(--steel)";
+    return `<div class="rr" style="--fill:${fill}"><span class="rk">${i+1}</span>
+      <div class="cmain"><div class="nmrow"><span class="nm2">${esc(c.nm)}</span>${c.sg?`<span class="party">${esc(c.sg)}</span>`:""}${vg}</div>
+        <div class="trk"><i style="width:${c.p/maxP*100}%"></i></div></div>
+      <div class="val"><div class="pc">${fmtP(c.pv)}%</div><div class="vt">${fmtV(c.v)}</div></div></div>`;}).join("");
+  const v=doc.v||{};
+  return `<div class="card"><div class="chead"><span class="ic">${r.ic}</span><h3>${r.nm}</h3></div>
+    <div class="csub">${r.sub?r.sub+" · ":""}${cs.length} candidatos · mostrando os ${Math.min(r.top,cs.length)} mais votados</div>
+    ${rows}
+    <div class="note">Brancos: ${fmtV(toInt(v.vb))} (${fmtP(v.pvb)}%) · Nulos: ${fmtV(toInt(v.vn||v.tvn))} (${fmtP(v.ptvn)}%) · Válidos: ${fmtV(toInt(v.vv))}</div></div>`;
+}
+async function loadGuara(){
+  const docs=await Promise.all(CARGOS.map(r=>getJSON(r.url).catch(()=>null)));
+  const est=docs[4]; let stateDoc=null; try{stateDoc=await getJSON(`${H}/6259/dados/sp/sp-c0007-e006259-u.json`);}catch(e){}
+  if(est){document.getElementById("kpis").innerHTML=kpis(est);document.getElementById("h2h").innerHTML=h2hGuara(est,stateDoc);
+    if(est.dg&&est.hg)document.getElementById("tsetime").textContent="Gerado em "+est.dg+" "+est.hg+".";
+    document.getElementById("live").textContent="Guará "+(toNum(est.s.pst)>=100?"100%":fmtP(est.s.pst)+"%")+" apurado";}
+  document.getElementById("cargos").innerHTML=CARGOS.map((r,i)=>docs[i]?cargoCard(r,docs[i]):"").join("");
+}
+initMap(); loadGuara(); setInterval(loadGuara,60000);
+</script>
+</body>
+</html>
